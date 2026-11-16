@@ -126,9 +126,8 @@ En FAC-004, el PDF presenta subtotal **$1,500.00**, IVA **$240.00** y total **$1
 
 ## 8. Conclusión
 
-El prototipo demuestra la integración de Microsoft Foundry y Azure Document Intelligence en un caso empresarial de consulta de inventarios y revisión preliminar de facturas. Las pruebas documentadas muestran respuestas contextualizadas, extracción de campos y alertas de posibles duplicados y diferencias contables. La solución está planteada como apoyo a decisiones humanas, no como sustituto de la validación administrativa. Para completar la entrega falta publicar un acceso funcional fuera del equipo de desarrollo y verificarlo como usuario externo.
+El prototipo demuestra la integración de Microsoft Foundry y Azure Document Intelligence en un caso empresarial de consulta de inventarios y revisión preliminar de facturas. Las pruebas documentadas muestran respuestas contextualizadas, extracción de campos y alertas de posibles duplicados y diferencias contables. La solución está planteada como apoyo a decisiones humanas, no como sustituto de la validación administrativa. Para completar la entrega falta publicar un acceso funcional fuera del equipo de desarrollo y verificarlo como usuario externo
 
----
 
-**Fuente de requisitos:** documento del caso *Proyecto integrador AI-901 — Distribuidora Río Claro*.  
-**Fuente de capturas:** documento proporcionado por el estudiante, *evidencias de capturas.docx*.
+
+
