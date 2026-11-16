@@ -1,2 +1,4 @@
 .env
 /node_modules
+package.backup.json
+package-lock.backup.json

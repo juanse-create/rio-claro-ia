@@ -1,60 +1,207 @@
 <!doctype html>
 <html lang="es">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#f2f5ef">
-    <title>Certifica | Asistente</title>
-    <link rel="stylesheet" href="/styles.css">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f2f5ef" />
+
+    <meta
+      name="description"
+      content="Asistente virtual de Distribuidora Río Claro."
+    />
+
+    <title>Río Claro IA | Asistente Virtual</title>
+
+    <link rel="stylesheet" href="/styles.css" />
     <script src="/app.js" defer></script>
   </head>
+
   <body>
     <div class="app-layout">
+      <section id="login-screen" class="login-screen" hidden>
+        <form id="login-form" class="login-card">
+          <div class="login-logo">R</div>
+
+          <h1>Bienvenido a Río Claro IA</h1>
+
+          <p>
+            Plataforma inteligente de Distribuidora Río Claro. Ingresa la
+            contraseña de demostración para continuar.
+          </p>
+
+          <label for="login-password">Contraseña de acceso</label>
+
+          <input
+            type="password"
+            id="login-password"
+            name="password"
+            placeholder="Ingresa tu contraseña"
+            autocomplete="current-password"
+            required
+          />
+
+          <button id="login-button" type="submit">Iniciar sesión</button>
+
+          <p id="login-error" role="alert" hidden></p>
+
+          <p class="login-note">Acceso restringido · Proyecto académico</p>
+        </form>
+      </section>
+
       <header class="topbar">
-        <a class="brand" href="/" aria-label="Certifica, inicio">
-          <span class="brand-mark" aria-hidden="true">C</span>
-          <span class="brand-name">certifica<span>.</span></span>
+        <a class="brand" href="/" aria-label="Río Claro IA, inicio">
+          <span class="brand-mark" aria-hidden="true">R</span>
+          <span class="brand-name"> Río Claro<span> IA.</span> </span>
         </a>
+
         <div class="topbar-context">
           <span class="context-dot" aria-hidden="true"></span>
-          <span>Asistente de certificación</span>
+          <span>Asistente inteligente empresarial</span>
         </div>
       </header>
 
-      <main class="chat-shell">
+      <main class="chat-shell" id="main-content" hidden>
         <section class="conversation" aria-label="Conversación">
           <div class="conversation-heading">
-            <p class="eyebrow">CONSULTA</p>
-            <h1>¿En qué te puedo orientar?</h1>
+            <p class="eyebrow">DISTRIBUIDORA RÍO CLARO</p>
+            <h1>¿En qué podemos ayudarte hoy?</h1>
           </div>
 
-          <div class="messages" id="messages" aria-live="polite" aria-relevant="additions text">
+          <div
+            class="messages"
+            id="messages"
+            aria-live="polite"
+            aria-relevant="additions text"
+          >
             <article class="message assistant-message">
-              <span class="message-avatar" aria-hidden="true">C</span>
+              <span class="message-avatar" aria-hidden="true">R</span>
+
               <div class="message-content">
-                <p class="message-author">Certifica <span>Asistente</span></p>
-                <p class="message-text">Hola. ¿Qué tema de certificación quieres revisar?</p>
+                <p class="message-author">
+                  Río Claro IA
+                  <span>Asistente virtual</span>
+                </p>
+
+                <p class="message-text">
+                  ¡Hola! 👋 Bienvenido a Distribuidora Río Claro. Soy tu
+                  asistente virtual con inteligencia artificial. Puedo
+                  orientarte sobre: • Productos de limpieza e higiene. •
+                  Inventarios de sucursales. • Consultas de pedidos. •
+                  Facturación y procedimientos administrativos. ¿En qué puedo
+                  ayudarte?
+                </p>
               </div>
             </article>
           </div>
-          <p class="typing-indicator" id="typing-indicator" role="status" hidden>Escribiendo…</p>
+
+          <p
+            class="typing-indicator"
+            id="typing-indicator"
+            role="status"
+            hidden
+          >
+            Río Claro IA está escribiendo…
+          </p>
+        </section>
+
+        <section class="invoice-panel" aria-labelledby="invoice-title">
+          <div class="invoice-heading">
+            <div>
+              <p class="eyebrow">AZURE DOCUMENT INTELLIGENCE</p>
+              <h2 id="invoice-title">Analizador de facturas PDF</h2>
+              <p>
+                Sube una factura ficticia para extraer sus datos y verificar sus
+                importes automáticamente.
+              </p>
+            </div>
+          </div>
+
+          <form id="invoice-form" class="invoice-form">
+            <label for="invoice-file">Selecciona una factura PDF</label>
+
+            <input
+              id="invoice-file"
+              name="factura"
+              type="file"
+              accept=".pdf,application/pdf"
+              required
+            />
+
+            <button id="invoice-button" type="submit">
+              Analizar factura PDF
+            </button>
+          </form>
+
+          <p id="invoice-status" role="status" aria-live="polite"></p>
+
+          <p id="invoice-error" class="form-error" role="alert" hidden></p>
+
+          <div id="invoice-result" class="invoice-result" hidden>
+            <h3>Resultado del análisis</h3>
+
+            <dl class="invoice-details">
+              <div>
+                <dt>Proveedor</dt>
+                <dd id="invoice-vendor">—</dd>
+              </div>
+
+              <div>
+                <dt>Cliente</dt>
+                <dd id="invoice-customer">—</dd>
+              </div>
+
+              <div>
+                <dt>Folio</dt>
+                <dd id="invoice-id">—</dd>
+              </div>
+
+              <div>
+                <dt>Fecha</dt>
+                <dd id="invoice-date">—</dd>
+              </div>
+
+              <div>
+                <dt>Subtotal</dt>
+                <dd id="invoice-subtotal">—</dd>
+              </div>
+
+              <div>
+                <dt>IVA</dt>
+                <dd id="invoice-tax">—</dd>
+              </div>
+
+              <div>
+                <dt>Total</dt>
+                <dd id="invoice-total">—</dd>
+              </div>
+            </dl>
+
+            <p id="invoice-validation"></p>
+            <p id="invoice-duplicates"></p>
+            <p id="invoice-warning"></p>
+          </div>
         </section>
 
         <form class="composer" id="chat-form">
-          <label class="visually-hidden" for="message-input">Escribe tu mensaje</label>
+          <label class="visually-hidden" for="message-input">
+            Escribe tu mensaje
+          </label>
+
           <textarea
             id="message-input"
             name="message"
             rows="1"
             maxlength="2000"
-            placeholder="Escribe tu consulta..."
+            placeholder="Pregunta sobre productos, pedidos o facturación..."
             autocomplete="off"
             required
           ></textarea>
+
           <button class="send-button" id="send-button" type="submit">
             <span>Enviar</span>
             <span class="send-arrow" aria-hidden="true">&#8599;</span>
           </button>
+
           <p class="form-error" id="form-error" role="alert" hidden></p>
         </form>
       </main>

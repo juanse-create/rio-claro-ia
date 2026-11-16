@@ -1,0 +1,59 @@
+
+{
+  "empresa": "Distribuidora Río Claro",
+  "tipo_datos": "Datos ficticios para demostración académica",
+  "moneda": "MXN",
+  "productos": [
+    {
+      "codigo": "PROD001",
+      "nombre": "Cloro 1 litro",
+      "precio": 25.50
+    },
+    {
+      "codigo": "PROD002",
+      "nombre": "Detergente 1 kg",
+      "precio": 42.00
+    },
+    {
+      "codigo": "PROD003",
+      "nombre": "Desinfectante 1 litro",
+      "precio": 38.00
+    }
+  ],
+  "inventario": [
+    {
+      "sucursal": "León",
+      "producto": "PROD001",
+      "existencias": 120
+    },
+    {
+      "sucursal": "León",
+      "producto": "PROD002",
+      "existencias": 75
+    },
+    {
+      "sucursal": "León",
+      "producto": "PROD003",
+      "existencias": 48
+    }
+  ],
+  "pedidos": [
+    {
+      "folio": "PED001",
+      "cliente": "Cliente Demo A",
+      "estado": "En preparación",
+      "sucursal": "León"
+    },
+    {
+      "folio": "PED002",
+      "cliente": "Cliente Demo B",
+      "estado": "Entregado",
+      "sucursal": "León"
+    }
+  ],
+  "politicas": {
+    "inventario": "Las existencias deben confirmarse antes de realizar una venta.",
+    "facturacion": "Toda factura requiere validación administrativa.",
+    "pedidos": "Los pedidos solo pueden modificarse mediante autorización del personal responsable."
+  }
+}

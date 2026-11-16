@@ -1,0 +1,61 @@
+
+{
+  "tipo_datos": "Facturas ficticias para demostración académica",
+  "moneda": "MXN",
+  "facturas": [
+    {
+      "folio": "FAC-001",
+      "proveedor": "Productos Limpios SA de CV",
+      "fecha": "2026-11-01",
+      "subtotal": 1000,
+      "iva": 160,
+      "total": 1160,
+      "estado": "Pendiente"
+    },
+    {
+      "folio": "FAC-002",
+      "proveedor": "Higiene Industrial del Bajío",
+      "fecha": "2026-11-03",
+      "subtotal": 2500,
+      "iva": 400,
+      "total": 2900,
+      "estado": "Pendiente"
+    },
+    {
+      "folio": "FAC-001",
+      "proveedor": "Productos Limpios SA de CV",
+      "fecha": "2026-11-01",
+      "subtotal": 1000,
+      "iva": 160,
+      "total": 1160,
+      "estado": "Pendiente"
+    },
+    {
+      "folio": "FAC-003",
+      "proveedor": "Distribuciones del Centro",
+      "fecha": "2026-11-05",
+      "subtotal": 1800,
+      "iva": 288,
+      "total": 2088,
+      "estado": "Pendiente"
+    },
+    {
+      "folio": "FAC-004",
+      "proveedor": "Suministros Comerciales",
+      "fecha": "2026-11-07",
+      "subtotal": 1500,
+      "iva": 240,
+      "total": 1900,
+      "estado": "Pendiente"
+    },
+    {
+      "folio": "FAC-005",
+      "proveedor": "Limpieza Profesional MX",
+      "fecha": "2026-11-09",
+      "subtotal": 3200,
+      "iva": 512,
+      "total": 3712,
+      "estado": "Pendiente"
+    }
+  ]
+}
