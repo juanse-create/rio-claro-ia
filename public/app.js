@@ -281,10 +281,12 @@ const loginPassword = document.querySelector("#login-password");
 const loginButton = document.querySelector("#login-button");
 const loginError = document.querySelector("#login-error");
 const mainContent = document.querySelector("#main-content");
+const logoutButton = document.querySelector("#logout-button");
 
 function mostrarAplicacion(autenticado) {
   loginScreen.hidden = autenticado;
   mainContent.hidden = !autenticado;
+  logoutButton.hidden = !autenticado;
 }
 
 async function verificarSesion() {
@@ -342,3 +344,30 @@ loginForm.addEventListener("submit", async (event) => {
 });
 
 verificarSesion();
+logoutButton.addEventListener("click", async () => {
+  logoutButton.disabled = true;
+  logoutButton.textContent = "Cerrando sesión...";
+
+  try {
+    const respuesta = await fetch("/api/logout", {
+      method: "POST",
+      credentials: "same-origin"
+    });
+
+    if (!respuesta.ok) {
+      throw new Error("No se pudo cerrar la sesión.");
+    }
+
+    conversationId = null;
+    loginPassword.value = "";
+    loginError.hidden = true;
+
+    mostrarAplicacion(false);
+  } catch (error) {
+    console.error("Error al cerrar sesión:", error);
+    alert("No fue posible cerrar la sesión. Inténtalo nuevamente.");
+  } finally {
+    logoutButton.disabled = false;
+    logoutButton.textContent = "Cerrar sesión";
+  }
+});

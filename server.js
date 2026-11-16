@@ -1,7 +1,7 @@
-
 import path from "node:path";
 import express from "express";
 import multer from "multer";
+import MemoryStore from "memorystore";
 import session from "express-session";
 import { rateLimit } from "express-rate-limit";
 import { timingSafeEqual } from "node:crypto";
@@ -10,6 +10,7 @@ import { AIProjectClient } from "@azure/ai-projects";
 import { DefaultAzureCredential } from "@azure/identity";
 
 const app = express();
+const SessionStore = MemoryStore(session);
 const port = Number(process.env.PORT) || 3000;
 
 const demoPassword = process.env.DEMO_ACCESS_PASSWORD;
@@ -24,9 +25,7 @@ const dataFile = path.join(import.meta.dirname, "datos", "empresa.json");
 const facturasFile = path.join(import.meta.dirname, "datos", "facturas.json");
 
 if (!demoPassword || !sessionSecret || sessionSecret.length < 32) {
-  throw new Error(
-    "Falta configurar DEMO_ACCESS_PASSWORD o SESSION_SECRET."
-  );
+  throw new Error("Falta configurar DEMO_ACCESS_PASSWORD o SESSION_SECRET.");
 }
 
 if (isProduction) {
@@ -36,14 +35,18 @@ if (isProduction) {
 const sessionMiddleware = session({
   name: "rio_claro_session",
   secret: sessionSecret,
+  store: new SessionStore({
+    checkPeriod: 15 * 60 * 1000,
+    ttl: 2 * 60 * 60 * 1000,
+  }),
   resave: false,
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
     secure: isProduction,
     sameSite: "lax",
-    maxAge: 2 * 60 * 60 * 1000
-  }
+    maxAge: 2 * 60 * 60 * 1000,
+  },
 });
 
 const loginLimiter = rateLimit({
@@ -52,8 +55,8 @@ const loginLimiter = rateLimit({
   standardHeaders: "draft-8",
   legacyHeaders: false,
   message: {
-    error: "Demasiados intentos. Intenta nuevamente en 15 minutos."
-  }
+    error: "Demasiados intentos. Intenta nuevamente en 15 minutos.",
+  },
 });
 
 const apiLimiter = rateLimit({
@@ -62,15 +65,15 @@ const apiLimiter = rateLimit({
   standardHeaders: "draft-8",
   legacyHeaders: false,
   message: {
-    error: "Demasiadas solicitudes. Espera un momento."
-  }
+    error: "Demasiadas solicitudes. Espera un momento.",
+  },
 });
 
 const subirFactura = multer({
   storage: multer.memoryStorage(),
   limits: {
     fileSize: 5 * 1024 * 1024,
-    files: 1
+    files: 1,
   },
   fileFilter: (_request, file, callback) => {
     if (file.mimetype !== "application/pdf") {
@@ -79,7 +82,7 @@ const subirFactura = multer({
     }
 
     callback(null, true);
-  }
+  },
 });
 
 function passwordMatches(candidate) {
@@ -87,8 +90,7 @@ function passwordMatches(candidate) {
   const expected = Buffer.from(demoPassword);
 
   return (
-    supplied.length === expected.length &&
-    timingSafeEqual(supplied, expected)
+    supplied.length === expected.length && timingSafeEqual(supplied, expected)
   );
 }
 
@@ -99,7 +101,7 @@ function requireLogin(request, response, next) {
   }
 
   response.status(401).json({
-    error: "Debes iniciar sesión para utilizar Río Claro IA."
+    error: "Debes iniciar sesión para utilizar Río Claro IA.",
   });
 }
 
@@ -128,7 +130,7 @@ async function analizarFacturas() {
   for (const factura of facturas) {
     const clave = JSON.stringify([
       normalizarTexto(factura.proveedor),
-      normalizarTexto(factura.folio)
+      normalizarTexto(factura.folio),
     ]);
 
     if (facturasVistas.has(clave)) {
@@ -136,28 +138,20 @@ async function analizarFacturas() {
         tipo: "POSIBLE_DUPLICADO",
         folio: factura.folio,
         proveedor: factura.proveedor,
-        descripcion:
-          "El folio aparece más de una vez para el mismo proveedor.",
-        requiereRevisionHumana: true
+        descripcion: "El folio aparece más de una vez para el mismo proveedor.",
+        requiereRevisionHumana: true,
       });
     } else {
       facturasVistas.set(clave, factura);
     }
 
-    const campos = [
-      "folio",
-      "proveedor",
-      "fecha",
-      "subtotal",
-      "iva",
-      "total"
-    ];
+    const campos = ["folio", "proveedor", "fecha", "subtotal", "iva", "total"];
 
     const faltantes = campos.filter(
       (campo) =>
         factura[campo] === undefined ||
         factura[campo] === null ||
-        factura[campo] === ""
+        factura[campo] === "",
     );
 
     if (faltantes.length > 0) {
@@ -165,30 +159,24 @@ async function analizarFacturas() {
         tipo: "CAMPOS_FALTANTES",
         folio: factura.folio ?? "Sin folio",
         descripcion: `Faltan: ${faltantes.join(", ")}`,
-        requiereRevisionHumana: true
+        requiereRevisionHumana: true,
       });
       continue;
     }
 
-    const importes = [
-      factura.subtotal,
-      factura.iva,
-      factura.total
-    ];
+    const importes = [factura.subtotal, factura.iva, factura.total];
 
     if (
       importes.some(
         (valor) =>
-          typeof valor !== "number" ||
-          !Number.isFinite(valor) ||
-          valor < 0
+          typeof valor !== "number" || !Number.isFinite(valor) || valor < 0,
       )
     ) {
       incidencias.push({
         tipo: "IMPORTE_INVALIDO",
         folio: factura.folio,
         descripcion: "Hay importes inválidos.",
-        requiereRevisionHumana: true
+        requiereRevisionHumana: true,
       });
       continue;
     }
@@ -204,7 +192,7 @@ async function analizarFacturas() {
         proveedor: factura.proveedor,
         totalRegistrado: factura.total,
         totalCalculado: (subtotal + iva) / 100,
-        requiereRevisionHumana: true
+        requiereRevisionHumana: true,
       });
     }
   }
@@ -215,7 +203,7 @@ async function analizarFacturas() {
     incidenciasDetectadas: incidencias.length,
     incidencias,
     advertencia:
-      "Las incidencias requieren revisión humana. No se aprueban ni ejecutan pagos."
+      "Las incidencias requieren revisión humana. No se aprueban ni ejecutan pagos.",
   };
 }
 
@@ -233,14 +221,14 @@ async function buscarFacturaDuplicada(facturaExtraida) {
       diferencias: [],
       importesCoincidenConRegistros: null,
       mensaje:
-        "No se pudo comprobar si está duplicada porque falta el proveedor o el folio."
+        "No se pudo comprobar si está duplicada porque falta el proveedor o el folio.",
     };
   }
 
   const coincidencias = datos.facturas.filter(
     (registrada) =>
       normalizarTexto(registrada.proveedor) === proveedor &&
-      normalizarTexto(registrada.folio) === folio
+      normalizarTexto(registrada.folio) === folio,
   );
 
   const diferencias = [];
@@ -248,7 +236,7 @@ async function buscarFacturaDuplicada(facturaExtraida) {
   const camposImporte = [
     ["subtotal", "subtotal"],
     ["iva", "iva"],
-    ["total", "total"]
+    ["total", "total"],
   ];
 
   for (const registrada of coincidencias) {
@@ -261,13 +249,12 @@ async function buscarFacturaDuplicada(facturaExtraida) {
         Number.isFinite(valorPdf) &&
         typeof valorRegistrado === "number" &&
         Number.isFinite(valorRegistrado) &&
-        Math.round(valorPdf * 100) !==
-          Math.round(valorRegistrado * 100)
+        Math.round(valorPdf * 100) !== Math.round(valorRegistrado * 100)
       ) {
         diferencias.push({
           campo: campoPdf,
           valorPdf,
-          valorRegistrado
+          valorRegistrado,
         });
       }
     }
@@ -278,13 +265,11 @@ async function buscarFacturaDuplicada(facturaExtraida) {
     coincidencias: coincidencias.length,
     diferencias,
     importesCoincidenConRegistros:
-      coincidencias.length === 0
-        ? null
-        : diferencias.length === 0,
+      coincidencias.length === 0 ? null : diferencias.length === 0,
     mensaje:
       coincidencias.length > 0
         ? "Se encontró una factura con el mismo proveedor y folio. Requiere revisión humana."
-        : "No se encontraron coincidencias en los registros ficticios."
+        : "No se encontraron coincidencias en los registros ficticios.",
   };
 }
 
@@ -294,31 +279,23 @@ let openAIClient;
 
 function logFoundryFailure(error) {
   const message =
-    error instanceof Error
-      ? error.message
-      : "Unknown Foundry error.";
+    error instanceof Error ? error.message : "Unknown Foundry error.";
 
   let safeMessage = message;
 
   if (projectEndpoint) {
-    safeMessage = safeMessage.replaceAll(
-      projectEndpoint,
-      "[project endpoint]"
-    );
+    safeMessage = safeMessage.replaceAll(projectEndpoint, "[project endpoint]");
   }
 
   if (agentName) {
-    safeMessage = safeMessage.replaceAll(
-      agentName,
-      "[agent name]"
-    );
+    safeMessage = safeMessage.replaceAll(agentName, "[agent name]");
   }
 
   safeMessage = safeMessage
     .replace(/Bearer\s+\S+/gi, "Bearer [redacted]")
     .replace(
       /\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g,
-      "[token redacted]"
+      "[token redacted]",
     )
     .slice(0, 500);
 
@@ -326,14 +303,14 @@ function logFoundryFailure(error) {
     name: error?.name,
     code: error?.code,
     statusCode: error?.statusCode ?? error?.status,
-    message: safeMessage
+    message: safeMessage,
   });
 }
 
 if (foundryConfigured) {
   const projectClient = new AIProjectClient(
     projectEndpoint,
-    new DefaultAzureCredential()
+    new DefaultAzureCredential(),
   );
 
   openAIClient = projectClient.getOpenAIClient();
@@ -352,7 +329,7 @@ app.get("/health", (_request, response) => {
 
 app.get("/api/session", (request, response) => {
   response.json({
-    authenticated: request.session?.authenticated === true
+    authenticated: request.session?.authenticated === true,
   });
 });
 
@@ -361,14 +338,14 @@ app.post("/api/login", loginLimiter, (request, response) => {
 
   if (typeof password !== "string" || password.length > 200) {
     response.status(400).json({
-      error: "Contraseña no válida."
+      error: "Contraseña no válida.",
     });
     return;
   }
 
   if (!passwordMatches(password)) {
     response.status(401).json({
-      error: "Contraseña incorrecta."
+      error: "Contraseña incorrecta.",
     });
     return;
   }
@@ -376,7 +353,7 @@ app.post("/api/login", loginLimiter, (request, response) => {
   request.session.regenerate((error) => {
     if (error) {
       response.status(500).json({
-        error: "No fue posible iniciar sesión."
+        error: "No fue posible iniciar sesión.",
       });
       return;
     }
@@ -386,13 +363,13 @@ app.post("/api/login", loginLimiter, (request, response) => {
     request.session.save((saveError) => {
       if (saveError) {
         response.status(500).json({
-          error: "No fue posible guardar la sesión."
+          error: "No fue posible guardar la sesión.",
         });
         return;
       }
 
       response.json({
-        authenticated: true
+        authenticated: true,
       });
     });
   });
@@ -402,7 +379,7 @@ app.post("/api/logout", requireLogin, (request, response) => {
   request.session.destroy((error) => {
     if (error) {
       response.status(500).json({
-        error: "No fue posible cerrar sesión."
+        error: "No fue posible cerrar sesión.",
       });
       return;
     }
@@ -410,7 +387,7 @@ app.post("/api/logout", requireLogin, (request, response) => {
     response.clearCookie("rio_claro_session");
 
     response.json({
-      authenticated: false
+      authenticated: false,
     });
   });
 });
@@ -422,7 +399,7 @@ app.post(
   async (request, response) => {
     if (!request.file) {
       response.status(400).json({
-        error: "Debes seleccionar una factura PDF."
+        error: "Debes seleccionar una factura PDF.",
       });
       return;
     }
@@ -431,7 +408,7 @@ app.post(
 
     if (pdf.subarray(0, 5).toString() !== "%PDF-") {
       response.status(400).json({
-        error: "El archivo no parece ser un PDF válido."
+        error: "El archivo no parece ser un PDF válido.",
       });
       return;
     }
@@ -441,7 +418,7 @@ app.post(
 
     if (!endpoint || !apiKey) {
       response.status(503).json({
-        error: "Document Intelligence no está configurado."
+        error: "Document Intelligence no está configurado.",
       });
       return;
     }
@@ -456,20 +433,18 @@ app.post(
         method: "POST",
         headers: {
           "Ocp-Apim-Subscription-Key": apiKey,
-          "Content-Type": "application/pdf"
+          "Content-Type": "application/pdf",
         },
-        body: pdf
+        body: pdf,
       });
 
       if (azureResponse.status !== 202) {
         throw new Error(
-          `Azure rechazó el documento: HTTP ${azureResponse.status}`
+          `Azure rechazó el documento: HTTP ${azureResponse.status}`,
         );
       }
 
-      const operationUrl = azureResponse.headers.get(
-        "operation-location"
-      );
+      const operationUrl = azureResponse.headers.get("operation-location");
 
       if (!operationUrl) {
         throw new Error("Azure no devolvió la operación.");
@@ -482,14 +457,12 @@ app.post(
 
         const consulta = await fetch(operationUrl, {
           headers: {
-            "Ocp-Apim-Subscription-Key": apiKey
-          }
+            "Ocp-Apim-Subscription-Key": apiKey,
+          },
         });
 
         if (!consulta.ok) {
-          throw new Error(
-            `Error HTTP ${consulta.status}`
-          );
+          throw new Error(`Error HTTP ${consulta.status}`);
         }
 
         resultado = await consulta.json();
@@ -499,24 +472,19 @@ app.post(
         }
 
         if (resultado.status === "failed") {
-          throw new Error(
-            "Azure no pudo analizar la factura."
-          );
+          throw new Error("Azure no pudo analizar la factura.");
         }
       }
 
       if (resultado?.status !== "succeeded") {
-        throw new Error(
-          "Tiempo de espera agotado."
-        );
+        throw new Error("Tiempo de espera agotado.");
       }
 
-      const campos =
-        resultado.analyzeResult?.documents?.[0]?.fields;
+      const campos = resultado.analyzeResult?.documents?.[0]?.fields;
 
       if (!campos) {
         response.status(422).json({
-          error: "No se identificaron campos de factura."
+          error: "No se identificaron campos de factura.",
         });
         return;
       }
@@ -540,25 +508,18 @@ app.post(
         fecha: obtener("InvoiceDate"),
         subtotal: obtener("SubTotal"),
         iva: obtener("TotalTax"),
-        total: obtener("InvoiceTotal")
+        total: obtener("InvoiceTotal"),
       };
 
-      const importes = [
-        factura.subtotal,
-        factura.iva,
-        factura.total
-      ];
+      const importes = [factura.subtotal, factura.iva, factura.total];
 
       const importesValidos = importes.every(
         (valor) =>
-          typeof valor === "number" &&
-          Number.isFinite(valor) &&
-          valor >= 0
+          typeof valor === "number" && Number.isFinite(valor) && valor >= 0,
       );
 
       const totalCorrecto = importesValidos
-        ? Math.round(factura.subtotal * 100) +
-            Math.round(factura.iva * 100) ===
+        ? Math.round(factura.subtotal * 100) + Math.round(factura.iva * 100) ===
           Math.round(factura.total * 100)
         : null;
 
@@ -570,23 +531,20 @@ app.post(
         validacion: {
           importesValidos,
           totalCorrecto,
-          requiereRevisionHumana: true
+          requiereRevisionHumana: true,
         },
         duplicados,
         advertencia:
-          "Extracción automática para demostración. Los datos deben revisarse antes de cualquier operación administrativa."
+          "Extracción automática para demostración. Los datos deben revisarse antes de cualquier operación administrativa.",
       });
     } catch (error) {
-      console.error(
-        "Error al analizar factura:",
-        error.message
-      );
+      console.error("Error al analizar factura:", error.message);
 
       response.status(502).json({
-        error: "No fue posible analizar la factura con Azure."
+        error: "No fue posible analizar la factura con Azure.",
       });
     }
-  }
+  },
 );
 
 app.post("/api/chat", requireLogin, async (request, response) => {
@@ -597,7 +555,7 @@ app.post("/api/chat", requireLogin, async (request, response) => {
 
   if (!message || message.length > 2000) {
     response.status(422).json({
-      error: "El mensaje debe tener entre 1 y 2000 caracteres."
+      error: "El mensaje debe tener entre 1 y 2000 caracteres.",
     });
     return;
   }
@@ -609,14 +567,14 @@ app.post("/api/chat", requireLogin, async (request, response) => {
     typeof suppliedConversationId !== "string"
   ) {
     response.status(422).json({
-      error: "El identificador de conversación no es válido."
+      error: "El identificador de conversación no es válido.",
     });
     return;
   }
 
   if (!openAIClient) {
     response.status(502).json({
-      error: "No fue posible procesar la solicitud de chat."
+      error: "No fue posible procesar la solicitud de chat.",
     });
     return;
   }
@@ -677,27 +635,27 @@ ${message}
     const result = await openAIClient.responses.create(
       {
         conversation: conversationId,
-        input: mensajeConContexto
+        input: mensajeConContexto,
       },
       {
         body: {
           agent_reference: {
             name: agentName,
-            type: "agent_reference"
-          }
-        }
-      }
+            type: "agent_reference",
+          },
+        },
+      },
     );
 
     response.json({
       reply: result.output_text,
-      conversation_id: conversationId
+      conversation_id: conversationId,
     });
   } catch (error) {
     logFoundryFailure(error);
 
     response.status(502).json({
-      error: "No fue posible procesar la solicitud de chat."
+      error: "No fue posible procesar la solicitud de chat.",
     });
   }
 });
@@ -705,23 +663,21 @@ ${message}
 app.use((error, _request, response, _next) => {
   if (error instanceof multer.MulterError) {
     response.status(400).json({
-      error:
-        "El archivo supera el límite de 5 MB o la carga no es válida."
+      error: "El archivo supera el límite de 5 MB o la carga no es válida.",
     });
     return;
   }
 
   if (error.message === "Solo se permiten archivos PDF.") {
     response.status(400).json({
-      error: error.message
+      error: error.message,
     });
     return;
   }
 
   if (error instanceof SyntaxError && "body" in error) {
     response.status(400).json({
-      error:
-        "El cuerpo de la solicitud no contiene JSON válido."
+      error: "El cuerpo de la solicitud no contiene JSON válido.",
     });
     return;
   }
@@ -729,7 +685,7 @@ app.use((error, _request, response, _next) => {
   console.error("Error interno:", error.name);
 
   response.status(500).json({
-    error: "Ocurrió un error interno."
+    error: "Ocurrió un error interno.",
   });
 });
 
